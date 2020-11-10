@@ -119,7 +119,7 @@ class DDLGenerator {
     if (elem.primaryKey || !elem.nullable) {
       line += ' NOT NULL'
     }
-    if (elem.documentation && elem.documentation.trim().length > 0) {
+    if (options.dbms === 'mysql' && elem.documentation && elem.documentation.trim().length > 0) {
       line += ' COMMENT \'' + elem.documentation + '\''
     }
     return line
@@ -200,6 +200,7 @@ class DDLGenerator {
     var lines = []
     var primaryKeys = []
     var uniques = []
+    var oracle_comments =[]
 
     // Table
     codeWriter.writeLine('CREATE TABLE ' + self.getId(elem.name, options) + ' (')
@@ -213,6 +214,11 @@ class DDLGenerator {
       if (col.unique) {
         uniques.push(self.getId(col.name, options))
       }
+      /* no test, open here after test on oracle
+      if (options.dbms === 'oracle' && col.documentation && elem.documentation.trim().length > 0) {
+        oracle_comments.push('COMMENT ON COLUMN ' + elem.name + '.' + col.name + ' IS \'' + elem.documentation + '\';');
+      }
+      */
       lines.push(self.getColumnString(col, options))
     })
 
@@ -224,6 +230,13 @@ class DDLGenerator {
     // Uniques
     if (uniques.length > 0) {
       lines.push('UNIQUE (' + uniques.join(', ') + ')')
+    }
+
+    //Oracle COMMENT
+    if (oracle_comments.length > 0) {
+      oracle_comments.forEach(function (comment) {
+        lines.push(comment)
+      });
     }
 
     // Write lines
